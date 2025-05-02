@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script upgrade zabbix-agent otomatis dari repo resmi Zabbix
+# Script upgrade zabbix-agent/zabbix-agent2 otomatis dari repo resmi Zabbix
 # Dokumentasi: https://repo.zabbix.com/zabbix/
 # Penggunaan:
 #   curl -sL <url-script> | bash -s -- [versi_zabbix]
@@ -39,6 +39,21 @@ else
     echo "Tidak ada parameter versi. Menggunakan versi terbaru: $zabbix_version"
 fi
 
+echo "Cek instalasi Zabbix Agent yang aktif..."
+if dpkg -l | grep -qw zabbix-agent2; then
+    agent_pkg="zabbix-agent2"
+    agent_service="zabbix-agent2.service"
+    echo "zabbix-agent2 terdeteksi, proses upgrade akan dilakukan pada zabbix-agent2."
+elif dpkg -l | grep -qw zabbix-agent; then
+    agent_pkg="zabbix-agent"
+    agent_service="zabbix-agent.service"
+    echo "zabbix-agent (klasik) terdeteksi, proses upgrade akan dilakukan pada zabbix-agent."
+else
+    echo "Tidak ditemukan zabbix-agent maupun zabbix-agent2 di server ini."
+    echo "Silakan install salah satu agent terlebih dahulu."
+    exit 1
+fi
+
 echo "Menghapus paket zabbix-release lama (jika ada)..."
 sudo dpkg --purge zabbix-release || true
 
@@ -52,15 +67,17 @@ sudo dpkg -i zabbix-release.deb
 echo "Update repository..."
 sudo apt update
 
-echo "Upgrade zabbix-agent..."
-sudo apt install --upgrade zabbix-agent
+echo "Upgrade $agent_pkg..."
+sudo apt install --upgrade "$agent_pkg"
 
-echo "Restart service zabbix-agent..."
-sudo systemctl restart zabbix-agent.service
+echo "Restart service $agent_service..."
+sudo systemctl restart "$agent_service"
 
-echo "Upgrade selesai. Silakan cek status dengan: systemctl status zabbix-agent.service"
+echo "Upgrade selesai. Silakan cek status dengan: systemctl status $agent_service"
 
 # Dokumentasi:
 # - Script ini dapat dijalankan secara non-interaktif, cocok untuk penggunaan via curl -sL ... | bash
+# - Script otomatis mendeteksi agent yang terpasang (zabbix-agent atau zabbix-agent2) dan hanya meng-upgrade agent yang aktif.
 # - Jika ingin memilih versi tertentu, tambahkan versi sebagai parameter (misal: 7.0)
 # - Jika tidak ada parameter, script otomatis memilih versi terbaru dari repo Zabbix
+# - Pastikan untuk melakukan pengujian setelah upgrade untuk memastikan agent berjalan normal.
