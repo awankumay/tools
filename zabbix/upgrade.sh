@@ -4,7 +4,7 @@
 # Dokumentasi: https://repo.zabbix.com/zabbix/
 # Penggunaan:
 #   curl -sL <url-script> | bash -s -- [versi_zabbix]
-#   Contoh: curl -sL ... | bash -s -- 7.0
+#   Contoh: curl -sL https://raw.githubusercontent.com/awankumay/tools/main/zabbix/upgrade.sh | bash -s -- 7.2
 
 set -e
 
