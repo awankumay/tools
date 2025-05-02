@@ -12,3 +12,4 @@ else
     echo "Tidak dapat menemukan file /etc/os-release. Sistem mungkin bukan berbasis Ubuntu."
     exit 1
 fi
+
