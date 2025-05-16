@@ -65,10 +65,10 @@ echo "Menginstal paket zabbix-release..."
 sudo dpkg -i zabbix-release.deb
 
 echo "Update repository..."
-sudo apt update
+sudo apt update -y
 
 echo "Upgrade $agent_pkg..."
-sudo apt install --upgrade "$agent_pkg"
+sudo apt install --upgrade "$agent_pkg" -y
 
 echo "Restart service $agent_service..."
 sudo systemctl restart "$agent_service"
