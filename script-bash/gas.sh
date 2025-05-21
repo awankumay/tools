@@ -45,22 +45,43 @@ setup_sshd_config() {
         echo "Backup file socket SSH berhasil dibuat di /usr/lib/systemd/system/ssh.socket.bak"
     fi
     
-    # Mengubah port SSH di sshd_config
-    sed -i "s/^#Port 22/Port $new_port/" /etc/ssh/sshd_config
+    # URL template dan file temporary
+    template_url="https://raw.githubusercontent.com/awankumay/tools/main/script-bash/config/sshd_config"
+    temp_config="/tmp/sshd_config_template"
     
-    # Jika port belum diubah (mungkin formatnya berbeda), tambahkan port baru
-    if ! grep -q "^Port $new_port" /etc/ssh/sshd_config; then
-        sed -i "s/^Port 22/Port $new_port/" /etc/ssh/sshd_config
+    # Download template dari GitHub
+    echo "Mengunduh template konfigurasi SSH dari GitHub..."
+    if wget -q "$template_url" -O "$temp_config"; then
+        echo "Template berhasil diunduh."
         
-        # Jika masih belum ada pengaturan port, tambahkan di awal file
+        # Mengganti variabel placeholder dengan nilai sebenarnya
+        sed -e "s/\$new_port/$new_port/g" -e "s/\${ip_address}/$ip_address/g" "$temp_config" > /etc/ssh/sshd_config
+        
+        echo "File konfigurasi SSH berhasil diterapkan dari template!"
+        
+        # Hapus file temporary
+        rm -f "$temp_config"
+    else
+        echo "Gagal mengunduh template dari $template_url."
+        echo "Menggunakan metode konfigurasi manual..."
+        
+        # Mengubah port SSH di sshd_config
+        sed -i "s/^#Port 22/Port $new_port/" /etc/ssh/sshd_config
+        
+        # Jika port belum diubah (mungkin formatnya berbeda), tambahkan port baru
         if ! grep -q "^Port $new_port" /etc/ssh/sshd_config; then
-            sed -i "1i Port $new_port" /etc/ssh/sshd_config
+            sed -i "s/^Port 22/Port $new_port/" /etc/ssh/sshd_config
+            
+            # Jika masih belum ada pengaturan port, tambahkan di awal file
+            if ! grep -q "^Port $new_port" /etc/ssh/sshd_config; then
+                sed -i "1i Port $new_port" /etc/ssh/sshd_config
+            fi
         fi
+        
+        # Meningkatkan keamanan sshd_config
+        sed -i 's/^PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+        sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
     fi
-    
-    # Meningkatkan keamanan sshd_config
-    sed -i 's/^PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
-    sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
     
     # Mengubah port di file socket untuk Ubuntu 24.04
     if [ -f /usr/lib/systemd/system/ssh.socket ]; then

@@ -1,0 +1,43 @@
+# Config Default Hardening Ubuntu
+
+Include /etc/ssh/sshd_config.d/*.conf
+
+# Default Protocol 2
+Protocol 2
+
+Port $new_port
+ListenAddress ${ip_address}
+
+# Logging
+#SyslogFacility AUTH
+LogLevel VERBOSE
+
+# Authentication
+PermitRootLogin no
+PasswordAuthentication yes
+PermitEmptyPasswords no
+HostbasedAuthentication no
+ChallengeResponseAuthentication yes
+MaxAuthTries 3
+MaxSessions 5
+UsePAM yes
+AllowTcpForwarding no
+X11Forwarding no
+PrintMotd no
+TCPKeepAlive yes
+PermitUserEnvironment no
+ClientAliveInterval 300
+ClientAliveCountMax 60
+
+# no default banner path
+#Banner none
+Banner /etc/issue.net
+
+# Allow client to pass locale environment variables
+AcceptEnv LANG LC_*
+
+# override default of no subsystems
+Subsystem sftp  /usr/lib/openssh/sftp-server
+
+# Specify Users
+AllowUsers arthur andika
