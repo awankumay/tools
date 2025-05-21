@@ -112,10 +112,20 @@ install_google_authenticator() {
     echo "========================================"
     echo "Menginstall Google Authenticator..."
     echo "========================================"
-    apt-get install libpam-google-authenticator -y
-    apt-get install google-authenticator -y
+    apt-get install libpam-google-authenticator google-authenticator -y
     echo "Google Authenticator telah terinstall."
 }
+
+# Fungsi Install Network Tools
+install_network_tools() {
+    echo "========================================"
+    echo "Menginstall Network Tools..."
+    echo "========================================"
+    apt-get install net-tools traceroute -y
+    echo "Network Tools telah terinstall."
+}
+
+
 
 # Fungsi Install fail2ban
 install_fail2ban() {
