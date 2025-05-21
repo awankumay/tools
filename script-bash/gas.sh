@@ -12,6 +12,80 @@ show_hostname_ip() {
     echo "IP Address: $ip_address"
 }
 
+# Fungsi untuk mengatur SSH dengan port kustom
+setup_sshd_config() {
+    echo "========================================"
+    echo "Mengatur konfigurasi SSH..."
+    echo "========================================"
+    
+    # Mendapatkan alamat IP
+    ip_address=$(hostname -I | awk '{print $1}')
+    
+    # Mengambil 2 digit terakhir dari IP address
+    last_two_digits=$(echo "$ip_address" | awk -F'.' '{print $4}' | grep -o '..$')
+    
+    # Jika IP address berakhiran dengan angka kurang dari 10, tambahkan 0 di depan
+    if [ ${#last_two_digits} -eq 1 ]; then
+        last_two_digits="0$last_two_digits"
+    fi
+    
+    # Membuat port baru (22 + 2 digit terakhir IP)
+    new_port="22$last_two_digits"
+    
+    echo "IP Address: $ip_address"
+    echo "2 Digit terakhir IP: $last_two_digits"
+    echo "Port SSH baru: $new_port"
+    
+    # Backup file sshd_config dan ssh.socket
+    sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+    echo "Backup file konfigurasi SSH berhasil dibuat di /etc/ssh/sshd_config.bak"
+    
+    if [ -f /usr/lib/systemd/system/ssh.socket ]; then
+        sudo cp /usr/lib/systemd/system/ssh.socket /usr/lib/systemd/system/ssh.socket.bak
+        echo "Backup file socket SSH berhasil dibuat di /usr/lib/systemd/system/ssh.socket.bak"
+    fi
+    
+    # Mengubah port SSH di sshd_config
+    sudo sed -i "s/^#Port 22/Port $new_port/" /etc/ssh/sshd_config
+    
+    # Jika port belum diubah (mungkin formatnya berbeda), tambahkan port baru
+    if ! grep -q "^Port $new_port" /etc/ssh/sshd_config; then
+        sudo sed -i "s/^Port 22/Port $new_port/" /etc/ssh/sshd_config
+        
+        # Jika masih belum ada pengaturan port, tambahkan di awal file
+        if ! grep -q "^Port $new_port" /etc/ssh/sshd_config; then
+            sudo sed -i "1i Port $new_port" /etc/ssh/sshd_config
+        fi
+    fi
+    
+    # Meningkatkan keamanan sshd_config
+    sudo sed -i 's/^PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+    sudo sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+    
+    # Mengubah port di file socket untuk Ubuntu 24.04
+    if [ -f /usr/lib/systemd/system/ssh.socket ]; then
+        sudo sed -i "s/^ListenStream=22/ListenStream=$new_port/" /usr/lib/systemd/system/ssh.socket
+        echo "Port SSH diubah di file socket"
+    fi
+    
+    # Reload systemd daemon untuk menerapkan perubahan
+    sudo systemctl daemon-reload
+    
+    # Restart layanan SSH
+    if systemctl is-active --quiet ssh.socket; then
+        echo "Menggunakan systemd socket SSH..."
+        sudo systemctl restart ssh.socket
+    else
+        echo "Menggunakan layanan SSH standar..."
+        sudo systemctl restart sshd
+    fi
+    
+    echo "Konfigurasi SSH telah diperbarui!"
+    echo "Port SSH baru: $new_port"
+    echo "PERHATIAN: Pastikan untuk membuka port $new_port di firewall jika diperlukan!"
+    echo "PERINGATAN: Koneksi SSH saat ini akan tetap terhubung, tetapi koneksi baru harus menggunakan port $new_port"
+}
+
 # Fungsi Install Google Authenticator
 install_google_authenticator() {
     echo "========================================"
@@ -74,6 +148,7 @@ full_install() {
     install_fail2ban
     install_sendmail
     install_logwatch
+    setup_sshd_config
     apt_update_upgrade
     echo "========================================"
     echo "Instalasi lengkap telah selesai."
@@ -91,6 +166,7 @@ show_help() {
     echo "  -s, --sendmail       : Install sendmail"
     echo "  -l, --logwatch       : Install logwatch"
     echo "  -u, --update         : Update dan upgrade sistem"
+    echo "  -p, --port-ssh       : Konfigurasi port SSH"
     echo "  -a, --all            : Instalasi lengkap"
     echo "  -h, --help           : Tampilkan bantuan ini"
     echo "  -i, --interactive    : Mode interaktif (menu)"
@@ -104,15 +180,16 @@ show_help() {
 while_loop_menu() {
     while true; do
         show_menu
-        read -p "Pilih menu (1-7): " choice
+        read -p "Pilih menu (1-8): " choice
         case $choice in
             1) install_google_authenticator ;;
             2) install_fail2ban ;;
             3) install_sendmail ;;
             4) install_logwatch ;;
-            5) apt_update_upgrade ;;
-            6) full_install ;;
-            7) echo "Keluar dari program."; exit 0 ;;
+            5) setup_sshd_config ;;
+            6) apt_update_upgrade ;;
+            7) full_install ;;
+            8) echo "Keluar dari program."; exit 0 ;;
             *) echo "Pilihan tidak valid. Silakan coba lagi." ;;
         esac
     done
@@ -128,9 +205,10 @@ show_menu() {
     echo "2. Install fail2ban"
     echo "3. Install sendmail"
     echo "4. Install logwatch"
-    echo "5. Update dan Upgrade Sistem"
-    echo "6. Full Install"
-    echo "7. Keluar"
+    echo "5. Konfigurasi Port SSH"
+    echo "6. Update dan Upgrade Sistem"
+    echo "7. Full Install"
+    echo "8. Keluar"
 }
 
 # Fungsi utama untuk memproses argumen
@@ -158,6 +236,10 @@ main() {
                 ;;
             -l|--logwatch)
                 install_logwatch
+                shift
+                ;;
+            -p|--port-ssh)
+                setup_sshd_config
                 shift
                 ;;
             -u|--update)
