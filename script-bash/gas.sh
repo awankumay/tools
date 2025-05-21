@@ -171,11 +171,8 @@ show_help() {
     echo "  -h, --help           : Tampilkan bantuan ini"
     echo "  -i, --interactive    : Mode interaktif (menu)"
     echo ""
-    echo "Contoh penggunaan dengan curl:"
-    echo "curl -sL https://raw.githubusercontent.com/awankumay/tools/main/gas.sh | bash -s -- -a"
-    echo ""
     echo "Contoh penggunaan dengan curl dan sudo:"
-    echo "curl -sL https://raw.githubusercontent.com/username/tools/main/gas.sh | sudo bash -s -- -a"
+    echo "curl -sL https://raw.githubusercontent.com/awankumay/tools/main/script-bash/gas.sh | sudo bash -s -- -a"
     echo "========================================"
 }
 
@@ -220,7 +217,7 @@ check_sudo() {
         echo "========================================"
         echo "ERROR: Script ini memerlukan akses root!"
         echo "Jalankan dengan: sudo ./gas.sh"
-        echo "Atau: curl -sL https://raw.githubusercontent.com/awankumay/tools/main/gas.sh | sudo bash -s -- [opsi]"
+        echo "Atau: curl -sL https://raw.githubusercontent.com/awankumay/tools/main/script-bash/gas.sh | sudo bash -s -- [opsi]"
         echo "========================================"
         exit 1
     fi
