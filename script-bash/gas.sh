@@ -96,7 +96,7 @@ show_help() {
     echo "  -i, --interactive    : Mode interaktif (menu)"
     echo ""
     echo "Contoh penggunaan dengan curl:"
-    echo "curl -sL https://raw.githubusercontent.com/username/tools/main/gas.sh | bash -s -- -a"
+    echo "curl -sL https://raw.githubusercontent.com/awankumay/tools/main/gas.sh | bash -s -- -a"
     echo "========================================"
 }
 
