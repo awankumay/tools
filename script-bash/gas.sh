@@ -37,47 +37,47 @@ setup_sshd_config() {
     echo "Port SSH baru: $new_port"
     
     # Backup file sshd_config dan ssh.socket
-    sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
+    cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
     echo "Backup file konfigurasi SSH berhasil dibuat di /etc/ssh/sshd_config.bak"
     
     if [ -f /usr/lib/systemd/system/ssh.socket ]; then
-        sudo cp /usr/lib/systemd/system/ssh.socket /usr/lib/systemd/system/ssh.socket.bak
+        cp /usr/lib/systemd/system/ssh.socket /usr/lib/systemd/system/ssh.socket.bak
         echo "Backup file socket SSH berhasil dibuat di /usr/lib/systemd/system/ssh.socket.bak"
     fi
     
     # Mengubah port SSH di sshd_config
-    sudo sed -i "s/^#Port 22/Port $new_port/" /etc/ssh/sshd_config
+    sed -i "s/^#Port 22/Port $new_port/" /etc/ssh/sshd_config
     
     # Jika port belum diubah (mungkin formatnya berbeda), tambahkan port baru
     if ! grep -q "^Port $new_port" /etc/ssh/sshd_config; then
-        sudo sed -i "s/^Port 22/Port $new_port/" /etc/ssh/sshd_config
+        sed -i "s/^Port 22/Port $new_port/" /etc/ssh/sshd_config
         
         # Jika masih belum ada pengaturan port, tambahkan di awal file
         if ! grep -q "^Port $new_port" /etc/ssh/sshd_config; then
-            sudo sed -i "1i Port $new_port" /etc/ssh/sshd_config
+            sed -i "1i Port $new_port" /etc/ssh/sshd_config
         fi
     fi
     
     # Meningkatkan keamanan sshd_config
-    sudo sed -i 's/^PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
-    sudo sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+    sed -i 's/^PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+    sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
     
     # Mengubah port di file socket untuk Ubuntu 24.04
     if [ -f /usr/lib/systemd/system/ssh.socket ]; then
-        sudo sed -i "s/^ListenStream=22/ListenStream=$new_port/" /usr/lib/systemd/system/ssh.socket
+        sed -i "s/^ListenStream=22/ListenStream=$new_port/" /usr/lib/systemd/system/ssh.socket
         echo "Port SSH diubah di file socket"
     fi
     
     # Reload systemd daemon untuk menerapkan perubahan
-    sudo systemctl daemon-reload
+    systemctl daemon-reload
     
     # Restart layanan SSH
     if systemctl is-active --quiet ssh.socket; then
         echo "Menggunakan systemd socket SSH..."
-        sudo systemctl restart ssh.socket
+        systemctl restart ssh.socket
     else
         echo "Menggunakan layanan SSH standar..."
-        sudo systemctl restart sshd
+        systemctl restart sshd
     fi
     
     echo "Konfigurasi SSH telah diperbarui!"
@@ -91,8 +91,8 @@ install_google_authenticator() {
     echo "========================================"
     echo "Menginstall Google Authenticator..."
     echo "========================================"
-    sudo apt-get install libpam-google-authenticator -y
-    sudo apt-get install google-authenticator -y
+    apt-get install libpam-google-authenticator -y
+    apt-get install google-authenticator -y
     echo "Google Authenticator telah terinstall."
 }
 
@@ -101,7 +101,7 @@ install_fail2ban() {
     echo "========================================"
     echo "Menginstall fail2ban..."
     echo "========================================"
-    sudo apt-get install fail2ban -y
+    apt-get install fail2ban -y
     echo "fail2ban telah terinstall."
 }
 
@@ -110,7 +110,7 @@ install_sendmail() {
     echo "========================================"
     echo "Menginstall sendmail..."
     echo "========================================"
-    sudo apt-get install sendmail -y
+    apt-get install sendmail -y
     echo "sendmail telah terinstall."
 }
 
@@ -119,7 +119,7 @@ install_logwatch() {
     echo "========================================"
     echo "Menginstall logwatch..."
     echo "========================================"
-    sudo apt-get install logwatch -y
+    apt-get install logwatch -y
     echo "logwatch telah terinstall."
 }
 
@@ -128,7 +128,7 @@ install_pam_radius() {
     echo "========================================"
     echo "Menginstall pam radius..."
     echo "========================================"
-    sudo apt-get install libpam-radius-auth -y
+    apt-get install libpam-radius-auth -y
     echo "pam radius telah terinstall."
 }
 
@@ -137,8 +137,8 @@ apt_update_upgrade() {
     echo "========================================"
     echo "Melakukan update dan upgrade sistem..."
     echo "========================================"
-    sudo apt-get update -y
-    sudo apt-get upgrade -y
+    apt-get update -y
+    apt-get upgrade -y
     echo "Update dan upgrade sistem telah selesai."
 }
 
@@ -173,6 +173,9 @@ show_help() {
     echo ""
     echo "Contoh penggunaan dengan curl:"
     echo "curl -sL https://raw.githubusercontent.com/awankumay/tools/main/gas.sh | bash -s -- -a"
+    echo ""
+    echo "Contoh penggunaan dengan curl dan sudo:"
+    echo "curl -sL https://raw.githubusercontent.com/username/tools/main/gas.sh | sudo bash -s -- -a"
     echo "========================================"
 }
 
@@ -211,8 +214,23 @@ show_menu() {
     echo "8. Keluar"
 }
 
+# Fungsi untuk memeriksa apakah script dijalankan dengan sudo
+check_sudo() {
+    if [ "$EUID" -ne 0 ]; then
+        echo "========================================"
+        echo "ERROR: Script ini memerlukan akses root!"
+        echo "Jalankan dengan: sudo ./gas.sh"
+        echo "Atau: curl -sL https://raw.githubusercontent.com/awankumay/tools/main/gas.sh | sudo bash -s -- [opsi]"
+        echo "========================================"
+        exit 1
+    fi
+}
+
 # Fungsi utama untuk memproses argumen
 main() {
+    # Periksa apakah script dijalankan dengan sudo
+    check_sudo
+    
     # Jika tidak ada argumen, jalankan mode interaktif
     if [ $# -eq 0 ]; then
         while_loop_menu
