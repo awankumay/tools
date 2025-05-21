@@ -165,12 +165,12 @@ apt_update_upgrade() {
 
 # Fungsi untuk instalasi lengkap
 full_install() {
+    apt_update_upgrade
     install_google_authenticator
     install_fail2ban
     install_sendmail
     install_logwatch
     setup_sshd_config
-    apt_update_upgrade
     echo "========================================"
     echo "Instalasi lengkap telah selesai."
     echo "========================================"
