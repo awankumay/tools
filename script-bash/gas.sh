@@ -180,7 +180,7 @@ full_install() {
     install_fail2ban
     install_sendmail
     install_logwatch
-    setup_sshd_config
+    # setup_sshd_config
     echo "========================================"
     echo "Instalasi lengkap telah selesai."
     echo "========================================"
