@@ -112,7 +112,7 @@ install_google_authenticator() {
     echo "========================================"
     echo "Menginstall Google Authenticator..."
     echo "========================================"
-    apt-get install libpam-google-authenticator google-authenticator -y
+    apt-get install libpam-google-authenticator -y
     echo "Google Authenticator telah terinstall."
 }
 
