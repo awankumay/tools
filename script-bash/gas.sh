@@ -12,6 +12,34 @@ show_hostname_ip() {
     echo "IP Address: $ip_address"
 }
 
+# Fungsi untuk mengatur banner SSH
+set_banner_ssh() {
+    echo "========================================"
+    echo "Mengatur banner SSH..."
+    echo "========================================"
+    # Dapatkan hostname dari sistem
+    hostname=$(hostname)
+    echo "Mengatur Banner SSH dengan hostname: $hostname"
+    # URL template dan file temporary
+    template_url="https://raw.githubusercontent.com/awankumay/tools/main/script-bash/config/issue.net"
+    temp_banner="/tmp/issue.net.tmp"
+    # Download banner ke file sementara
+    echo "Mengunduh banner SSH dari GitHub..."
+    if wget -q "$template_url" -O "$temp_banner"; then
+        echo "Banner berhasil diunduh."
+        
+        # Ganti $hostname dengan nilai hostname aktual
+        sed "s/\$hostname/$hostname/g" "$temp_banner" > /etc/issue.net
+                
+        # Hapus file sementara
+        rm -f "$temp_banner"
+        echo "Banner SSH berhasil diatur dengan hostname: $hostname"
+    else
+        echo "Gagal mengunduh banner dari GitHub"
+        exit 1
+    fi
+}
+
 # Fungsi untuk mengatur SSH dengan port kustom
 setup_sshd_config() {
     echo "========================================"
@@ -173,6 +201,16 @@ apt_update_upgrade() {
     echo "Update dan upgrade sistem telah selesai."
 }
 
+# Fungsi Setup Timezone
+
+set_timezone() {
+    echo "========================================"
+    echo "Mengatur timezone ke Asia/Jakarta..."
+    echo "========================================"
+    timedatectl set-timezone Asia/Jakarta
+    echo "Timezone telah diatur ke Asia/Jakarta."
+}
+
 # Fungsi untuk instalasi lengkap
 full_install() {
     apt_update_upgrade
@@ -181,6 +219,9 @@ full_install() {
     install_sendmail
     install_logwatch
     install_network_tools
+    install_pam_radius
+    set_timezone
+    set_banner_ssh
     # setup_sshd_config
     echo "========================================"
     echo "Instalasi lengkap telah selesai."
@@ -220,8 +261,12 @@ while_loop_menu() {
             4) install_logwatch ;;
             5) setup_sshd_config ;;
             6) apt_update_upgrade ;;
-            7) full_install ;;
-            8) echo "Keluar dari program."; exit 0 ;;
+            7) setup_timezone ;;
+            8) set_banner_ssh ;;
+            9) install_network_tools ;;
+            10) install_pam_radius ;;
+            11) install_full ;;
+            12) echo "Keluar dari program."; exit 0 ;;
             *) echo "Pilihan tidak valid. Silakan coba lagi." ;;
         esac
     done
@@ -291,6 +336,26 @@ main() {
                 ;;
             -u|--update)
                 apt_update_upgrade
+                shift
+                ;;
+            -t|--timezone)
+                set_timezone
+                shift
+                ;;
+            -n|--network-tools)
+                install_network_tools
+                shift
+                ;;
+            -r|--pam-radius)
+                install_pam_radius
+                shift
+                ;;
+            -b|--banner-ssh)
+                set_banner_ssh
+                shift
+                ;;
+            -c|--config-ssh)
+                setup_sshd_config
                 shift
                 ;;
             -a|--all)
